@@ -110,3 +110,26 @@ exports.delete = (req,res)=>{
         });
 
 }
+
+exports.purchase = async (req, res) => {
+  try {
+    const { drugId, quantity } = req.body;
+
+    const drug = await Drugdb.findById(drugId);
+    if (!drug) {
+      return res.status(404).send({ message: "Drug not found" });
+    }
+
+    if (drug.pack < quantity) {
+      return res.status(400).send({ message: "Not enough stock" });
+    }
+
+    // trừ số lượng pack thuốc
+    drug.pack -= quantity;
+    await drug.save();
+
+    res.status(200).send({ message: "Purchase successful", drug });
+  } catch (err) {
+    res.status(500).send({ message: err.message });
+  }
+};

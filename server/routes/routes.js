@@ -1,25 +1,48 @@
-const express = require('express');// As in the server.js
-const route = express.Router(); //Allows us use express router in this file
-const services = require('../services/render');//uses the render.js file from services here
+const express = require('express');
+const route = express.Router();
 
-const controller = require('../controller/controller');//uses the render.js file from services here
+const services = require('../services/render');
+const controller = require('../controller/controller');
 
+// Import middleware
+const checkName = require('../middleware/checkName');
+const checkDosage = require('../middleware/checkDosage');
+const checkCard = require('../middleware/checkCard');
+const checkPack = require('../middleware/checkPack');
+const checkPerDay = require('../middleware/checkPerDay');
 
+// Page routes
 route.get('/', services.home);
-
-
 route.get('/manage', services.manage);
 route.get('/dosage', services.dosage);
 route.get('/purchase', services.purchase);
 route.get('/add-drug', services.addDrug);
 route.get('/update-drug', services.updateDrug);
 
+// API routes (CRUD)
+route.post('/api/drugs', [checkName, checkDosage, checkCard, checkPack, checkPerDay],
+  controller.create
+);
 
+route.post('/purchase', (req, res) => {
+  let days = parseInt(req.body.days) || 30;
 
-// API for CRUD operations
-route.post('/api/drugs', controller.create);
+  axios.get(`${BASE_URI}:${PORT}/api/drugs`)
+    .then(function (response) {
+      res.render('purchase', {
+        drugs: response.data,
+        title: 'Purchase Drugs',
+        days: days   // 👈 lấy từ input
+      });
+    })
+    .catch(err => {
+      res.send(err);
+    });
+});
+
+route.post('/api/purchase', controller.purchase);
 route.get('/api/drugs', controller.find);
 route.put('/api/drugs/:id', controller.update);
 route.delete('/api/drugs/:id', controller.delete);
 
-module.exports = route;//exports this so it can always be used elsewhere
+module.exports = route;

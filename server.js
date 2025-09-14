@@ -21,6 +21,27 @@ connectMongo();
 //load the routes
 app.use('/',require('./server/routes/routes'));//Pulls the routes file whenever this is loaded
 
+//--------------------------------------------
+// ❌ Nếu không có route nào khớp → 404
+//--------------------------------------------
+app.use((req, res, next) => {
+    const error = new Error("Page Not Found");
+    error.status = 404;
+    next(error);
+});
+
+//--------------------------------------------
+// ✅ Error Handler (bắt mọi lỗi còn lại)
+//--------------------------------------------
+app.use((err, req, res, next) => {
+    const statusCode = err.status || 500;
+    console.error(`[Error] ${statusCode} - ${err.message}`);
+    res.status(statusCode).render("error", {
+        title: "Error Page",
+        message: err.message,
+        status: statusCode
+    });
+});
 
 app.listen(PORT, function() {//specifies port to listen on
 	console.log('listening on '+ PORT);
